@@ -1,37 +1,220 @@
-# DailyPulse — Stay Informed. Stay Ahead.
+DailyPulse
+Stay Informed. Stay Ahead.
+I built DailyPulse to bring news into one place with a clean browsing experience, category-based discovery, and automated article updates. This repository contains the React frontend and the Express backend, backed by MongoDB.
 
-Status: **Phase 1 complete** (server foundation + automated ingestion). See "Roadmap".
+Live Demo
+Website: https://full-stack-news-and-vlogs-website.vercel.app/
 
-## Run locally
-```bash
+Backend API: https://dailypulse-api.onrender.com
+
+Update Status: https://full-stack-news-and-vlogs-website.vercel.app/api/status
+
+Features
+Browse articles by category
+
+Search news and filter by date range
+
+View individual articles and their original sources
+
+Paginated article listings
+
+Freshness indicators and last-update status
+
+Automated ingestion from configured RSS feeds
+
+Optional NewsAPI integration
+
+Duplicate detection and URL normalization
+
+Scheduled daily updates and optional frequent refreshes
+
+Tech Stack
+Area	Technologies
+Frontend	React, TypeScript, Vite, Tailwind CSS
+Backend	Node.js, Express, TypeScript
+Database	MongoDB Atlas, Mongoose
+Scheduling	node-cron
+Testing	Vitest
+Hosting	Vercel and Render
+How It Works
+The backend collects articles from the configured providers, processes them, checks for duplicates, and stores them in MongoDB. The frontend retrieves articles through the API and displays them with category, search, and date-filtering options.
+
+In local development, Vite forwards /api requests to the backend on port 5000. In production, Vercel forwards those requests to the Render backend through a rewrite.
+
+text
+React Frontend
+      |
+      | /api requests
+      v
+Express Backend
+      |
+      v
+MongoDB
+      ^
+      |
+Scheduled News Ingestion
+Project Structure
+text
+.
+├── client/
+│   └── dailypulse/
+│       └── client/
+│           ├── src/
+│           ├── index.html
+│           ├── package.json
+│           ├── vite.config.ts
+│           └── vercel.json
+├── server/
+│   ├── src/
+│   ├── tests/
+│   ├── package.json
+│   └── tsconfig.json
+├── .env.example
+├── .gitignore
+└── README.md
+Run Locally
+Requirements
+Node.js and npm
+
+MongoDB Atlas or a running local MongoDB instance
+
+A copy of this repository
+
+Backend Setup
+Open a terminal in the repository root:
+
+bash
 cd server
-cp ../.env.example .env      # set MONGODB_URI (local Mongo or Atlas) and optionally NEWSAPI_KEY
 npm install
-npm run ingest               # one-off ingestion (needs RSS_FEEDS and/or NEWSAPI_KEY)
-npm run dev                  # API on :5000 with the scheduler running
-npm test                     # unit tests (no database required)
-```
+Copy the environment template into the server folder.
 
-## How automatic updates work
-`node-cron` runs inside the server (timezone `Asia/Kolkata`): `DAILY_CRON` (default 06:00) and an optional `BREAKING_CRON` (every 30 min).
-A MongoDB lock (`JobLock`) prevents overlapping/duplicate runs. On boot, a catch-up run executes (useful on hosts that sleep).
-**Hosting note:** the scheduler needs an always-on process. On Render's free tier the service sleeps; use a paid instance, or ping the service with an external cron service.
+Windows PowerShell:
 
-## API (so far)
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/articles?page&limit&category&q&range=today\|yesterday\|week\|month&sort=latest\|popular` | Paginated list + text search |
-| `GET /api/articles/today` | Published today (IST), by publication date |
-| `GET /api/articles/:id` | Single article |
-| `GET /api/categories` | The 20 categories |
-| `GET /api/status` | Last successful update + `stale` flag |
+powershell
+Copy-Item ..\.env.example .env
+macOS / Linux:
 
-## Sources & keys
-- **NewsAPI.org** — https://newsapi.org (free plan is development-only; production needs a paid plan).
-- **RSS** — set `RSS_FEEDS`. Defaults point to PIB and RBI feeds; verify each URL and its terms of use before relying on them.
+bash
+cp ../.env.example .env
+Configure server/.env with your own MongoDB connection string. Keep private credentials in this local file, not in the repository.
 
-## Roadmap
-1. ✅ Server, models, ingestion, dedupe, scheduler, read API, tests
-2. Auth (JWT cookies, bcrypt, CSRF), bookmarks, admin routes + manual refresh
-3. React/Vite/Tailwind UI (homepage, category/article pages, dark mode)
-4. Quiz + exam prep  5. AI features + Bengali  6. Notifications, analytics, SEO, deployment
+For a local MongoDB instance, the database setting can be:
+
+text
+MONGODB_URI=mongodb://127.0.0.1:27017/Dailypulse
+For Atlas, use the connection string supplied by Atlas and configure the project's database user and network access.
+
+Run the tests, import articles, and start the API:
+
+bash
+npm test
+npm run ingest
+npm run dev
+The backend runs locally at:
+
+text
+http://localhost:5000
+Frontend Setup
+Open another terminal in the repository root:
+
+bash
+cd client/dailypulse/client
+npm install
+npm run dev
+Open the address printed by Vite, normally:
+
+text
+http://localhost:5173
+Keep both development servers running while using the application locally.
+
+Configuration
+Variable	Purpose
+NODE_ENV	Runtime environment
+PORT	Backend port
+CLIENT_URL	Frontend origin used by the backend configuration
+MONGODB_URI	MongoDB connection string
+ENABLE_SCHEDULER	Enables scheduled ingestion
+TIMEZONE	Scheduler timezone
+DAILY_CRON	Daily ingestion schedule
+BREAKING_CRON	Frequent refresh schedule
+ENABLE_BREAKING_REFRESH	Enables frequent refreshes
+RSS_FEEDS	Comma-separated feed entries in name|url|categorySlug format
+NEWSAPI_KEY	Optional NewsAPI credential
+The configured scheduler defaults use Asia/Kolkata, with a daily run at 6:00 AM IST and an optional refresh every 30 minutes.
+
+The default RSS configuration includes PIB and RBI. Provider availability and access policies can affect ingestion. NewsAPI is optional; its plan terms should be checked before production use.
+
+API Routes
+Method	Route	Description
+GET	/api/articles	Paginated articles with search and filters
+GET	/api/articles/today	Articles published today using IST date boundaries
+GET	/api/articles/:id	Individual article
+GET	/api/categories	Available categories
+GET	/api/status	Last successful update and stale-data status
+Article Filters
+The article-list endpoint supports:
+
+page and limit for pagination
+
+category for category filtering
+
+q for text search
+
+range with today, yesterday, week, or month
+
+sort with latest or popular
+
+Example:
+
+text
+/api/articles?page=1&limit=10&range=week&sort=latest
+Deployment
+Backend — Render
+The backend is hosted on Render, with its database connection and other private configuration supplied through server-side environment variables.
+
+Frontend — Vercel
+The frontend is hosted on Vercel. Its vercel.json forwards API requests to the backend and supports client-side routes:
+
+json
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://dailypulse-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+This configuration belongs beside the frontend's package.json. The API rule comes before the frontend fallback.
+
+Testing
+Run the backend unit tests from the server directory:
+
+bash
+npm test
+The test suite covers URL normalization, similar-title detection, category classification, IST date handling, and RSS feed configuration parsing.
+
+Operational Notes
+Scheduled jobs need the backend process to remain running. Sleeping instances do not provide uninterrupted scheduling.
+
+HTTP 403 or 406 responses from a feed indicate that the provider rejected the request; they do not necessarily mean the database or API is unavailable.
+
+The status endpoint and article endpoint should be checked separately when diagnosing missing news.
+
+Local ingestion can populate the deployed database when both environments use the same MongoDB database.
+
+Security
+Environment files and private credentials must stay out of source control.
+
+The example environment file should contain safe placeholders only.
+
+Exposed database passwords, API keys, and secrets should be rotated immediately.
+
+Backend credentials must never be included in frontend code.
+
+Future Improvements
+I plan to continue improving the platform with richer personalization, exam-preparation tools, AI-assisted features, multilingual support, and notifications.
+
